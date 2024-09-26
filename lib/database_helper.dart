@@ -69,6 +69,18 @@ class DatabaseHelper {
     }
   }
 
+  Future<int> getActiveScansCount() async {
+    final Database db = await database;
+
+    final List<Map<String, dynamic>> countList = await db.rawQuery(
+      'SELECT COUNT(*) AS count FROM scans WHERE status = ?',
+      [1], // 1 es el valor que usas para indicar registros activos
+    );
+
+    // Obtiene el valor de la primera fila y la columna 'count'
+    return Sqflite.firstIntValue(countList) ?? 0;
+  }
+
   Future<List<Map<String, dynamic>>> getScannedData() async {
     final Database db = await database;
     return await db.query(

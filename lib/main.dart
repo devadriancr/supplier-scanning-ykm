@@ -30,7 +30,8 @@ class _ScanifyHomePageState extends State<ScanifyHomePage> {
   late ScanifyController _scanifyController;
 
   List<Map<String, dynamic>> _scannedData = [];
-  bool _isLoading = false; // Added loading state
+  bool _isLoading = false;
+  int _count = 0;
 
   @override
   void initState() {
@@ -49,6 +50,14 @@ class _ScanifyHomePageState extends State<ScanifyHomePage> {
       setState(() {
         _scannedData = data;
       });
+    });
+    _updateCount(); // Update the count when data is fetched
+  }
+
+  Future<void> _updateCount() async {
+    int count = await _scanifyController.getActiveScansCount();
+    setState(() {
+      _count = count;
     });
   }
 
@@ -115,13 +124,16 @@ class _ScanifyHomePageState extends State<ScanifyHomePage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _sendDataToApi, // Updated to use the new method
+                onPressed: _sendDataToApi,
                 icon: Icon(Icons.cloud_sync),
                 label: Text('Load Scanned Data'),
               ),
             ),
             SizedBox(height: 16.0),
-            _isLoading // Show loading indicator if isLoading is true
+            // Display the total count of active scans
+            Text('Total active scans: $_count'),
+            SizedBox(height: 16.0),
+            _isLoading
                 ? Center(child: CircularProgressIndicator())
                 : Expanded(
                     child: SingleChildScrollView(
@@ -130,7 +142,6 @@ class _ScanifyHomePageState extends State<ScanifyHomePage> {
                         scrollDirection: Axis.vertical,
                         child: DataTable(
                           columns: [
-                            // DataColumn(label: Text('ID')),
                             DataColumn(label: Text('Code')),
                             DataColumn(label: Text('Status')),
                             DataColumn(label: Text('Created At')),
@@ -139,7 +150,6 @@ class _ScanifyHomePageState extends State<ScanifyHomePage> {
                               .map(
                                 (item) => DataRow(
                                   cells: [
-                                    // DataCell(Text(item['id'].toString())),
                                     DataCell(Text(item['code'])),
                                     DataCell(
                                       Text(
