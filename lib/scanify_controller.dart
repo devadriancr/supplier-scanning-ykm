@@ -73,4 +73,8 @@ class ScanifyController {
       );
     }
   }
+
+  Future<int> getActiveScansCount() async {
+    return await _dbHelper.getActiveScansCount();
+  }
 }

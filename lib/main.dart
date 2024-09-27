@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'scanify_controller.dart';
 
@@ -30,7 +32,8 @@ class _ScanifyHomePageState extends State<ScanifyHomePage> {
   late ScanifyController _scanifyController;
 
   List<Map<String, dynamic>> _scannedData = [];
-  bool _isLoading = false; // Added loading state
+  bool _isLoading = false;
+  int _count = 0;
 
   @override
   void initState() {
@@ -49,6 +52,14 @@ class _ScanifyHomePageState extends State<ScanifyHomePage> {
       setState(() {
         _scannedData = data;
       });
+    });
+    _updateCount(); // Update the count when data is fetched
+  }
+
+  Future<void> _updateCount() async {
+    int count = await _scanifyController.getActiveScansCount();
+    setState(() {
+      _count = count;
     });
   }
 
@@ -69,7 +80,28 @@ class _ScanifyHomePageState extends State<ScanifyHomePage> {
     });
 
     try {
-      await _scanifyController.sendDataToApi();
+      // Define a timeout duration of 15 seconds
+      final timeoutDuration = Duration(seconds: 15);
+
+      // Start the API call and the timeout
+      await Future.any([
+        _scanifyController.sendDataToApi(),
+        Future.delayed(timeoutDuration, () {
+          throw TimeoutException('Timeout while connecting to the API');
+        }),
+      ]);
+    } on TimeoutException {
+      Fluttertoast.showToast(
+        msg: 'Hubo un error, intente más tarde.',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+      );
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: 'Failed to send data: ${e.toString()}',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+      );
     } finally {
       setState(() {
         _isLoading = false;
@@ -115,13 +147,22 @@ class _ScanifyHomePageState extends State<ScanifyHomePage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _sendDataToApi, // Updated to use the new method
+                onPressed: _sendDataToApi,
                 icon: Icon(Icons.cloud_sync),
                 label: Text('Load Scanned Data'),
               ),
             ),
             SizedBox(height: 16.0),
-            _isLoading // Show loading indicator if isLoading is true
+            // Display the total count of active scans
+            Text(
+              'Scanned: $_count',
+              style: TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 16.0),
+            _isLoading
                 ? Center(child: CircularProgressIndicator())
                 : Expanded(
                     child: SingleChildScrollView(
@@ -130,7 +171,6 @@ class _ScanifyHomePageState extends State<ScanifyHomePage> {
                         scrollDirection: Axis.vertical,
                         child: DataTable(
                           columns: [
-                            // DataColumn(label: Text('ID')),
                             DataColumn(label: Text('Code')),
                             DataColumn(label: Text('Status')),
                             DataColumn(label: Text('Created At')),
@@ -139,7 +179,6 @@ class _ScanifyHomePageState extends State<ScanifyHomePage> {
                               .map(
                                 (item) => DataRow(
                                   cells: [
-                                    // DataCell(Text(item['id'].toString())),
                                     DataCell(Text(item['code'])),
                                     DataCell(
                                       Text(
