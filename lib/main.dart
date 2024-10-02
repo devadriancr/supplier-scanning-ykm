@@ -131,7 +131,13 @@ class _ScanifyHomePageState extends State<ScanifyHomePage> {
             ),
             SizedBox(height: 16.0),
             // Display the total count of active scans
-            Text('Total active scans: $_count'),
+            Text(
+              'Scanned: $_count',
+              style: TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             SizedBox(height: 16.0),
             _isLoading
                 ? Center(child: CircularProgressIndicator())
