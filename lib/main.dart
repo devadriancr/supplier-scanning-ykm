@@ -1,6 +1,4 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'scanify_controller.dart';
 
@@ -80,28 +78,7 @@ class _ScanifyHomePageState extends State<ScanifyHomePage> {
     });
 
     try {
-      // Define a timeout duration of 15 seconds
-      final timeoutDuration = Duration(seconds: 15);
-
-      // Start the API call and the timeout
-      await Future.any([
-        _scanifyController.sendDataToApi(),
-        Future.delayed(timeoutDuration, () {
-          throw TimeoutException('Timeout while connecting to the API');
-        }),
-      ]);
-    } on TimeoutException {
-      Fluttertoast.showToast(
-        msg: 'Hubo un error, intente más tarde.',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-      );
-    } catch (e) {
-      Fluttertoast.showToast(
-        msg: 'Failed to send data: ${e.toString()}',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-      );
+      await _scanifyController.sendDataToApi();
     } finally {
       setState(() {
         _isLoading = false;
